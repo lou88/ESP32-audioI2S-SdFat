@@ -5,17 +5,20 @@
 
 #pragma once
 #pragma GCC optimize("Ofast")
+#define SD_DEBUG 1
+#define ENABLE_ARDUINO_FS_SUPPORT 1
+#define ENABLE_ARDUINO_FEATURES 1
+#define PREFER_SDFAT_LIBRARY
+#define SDFAT_FILE_TYPE 3
 #include "audiolib_structs.hpp"
 #include "esp_arduino_version.h"
 #include "esp_dsp.h"
 #include "psram_unique_ptr.hpp"
 #include <Arduino.h>
 #include <FFat.h>
-#include <FS.h>
 #include <NetworkClient.h>
 #include <NetworkClientSecure.h>
-#include <SD.h>
-#include <SD_MMC.h>
+#include <SdFat.h>
 #include <WiFi.h>
 #include <atomic>
 #include <charconv>
@@ -244,7 +247,7 @@ class Audio {
     audiolib::hwoe_t dismantle_host(const char* host);
     bool             connecttohost(const char* host, const char* user = nullptr, const char* pwd = nullptr);
     bool             connecttospeech(const char* speech, const char* lang);
-    bool             connecttoFS(fs::FS& fs, const char* path, int32_t fileStartTime = -1);
+    bool             connecttoFS(SdFs& fs, const char* path, int32_t fileStartTime = -1);
     void             setConnectionTimeout(uint16_t timeout_ms, uint16_t timeout_ms_ssl);
     bool             setAudioPlayTime(uint16_t sec);
     bool             setTimeOffset(int sec);
@@ -467,7 +470,7 @@ class Audio {
     } settings;
 
   private:
-    File                m_audiofile;
+    FsFile              m_audiofile;
     NetworkClient       client;
     NetworkClientSecure clientsecure;
     NetworkClient*      m_client = nullptr;

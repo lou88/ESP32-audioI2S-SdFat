@@ -1157,7 +1157,7 @@ bool Audio::httpRange(uint32_t seek, uint32_t length) {
     return true;
 }
 // —————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
-bool Audio::connecttoFS(fs::FS& fs, const char* path, int32_t fileStartTime) {
+bool Audio::connecttoFS(SdFs& fs, const char* path, int32_t fileStartTime) {
 
     ps_ptr<char> c_path;
     ps_ptr<char> audioPath;
@@ -3363,7 +3363,9 @@ uint32_t Audio::stopSong() {
                 m_client->stop();
             }
             if (m_audiofile) {
-                info(*this, evt_info, "Closing audio file \"{}\"", m_audiofile.name());
+                char nameBuf[64]; // make sure this is large enough
+                m_audiofile.getName(nameBuf, sizeof(nameBuf));
+                info(*this, evt_info, "Closing audio file \"{}\"", nameBuf);
                 m_audiofile.close();
             }
         }
@@ -4390,7 +4392,11 @@ void Audio::processLocalFile() {
         if (m_f_ID3v1TagFound) readID3V1Tag();
     exit:
         ps_ptr<char> afn;                                // audio file name
-        if (m_audiofile) afn.assign(m_audiofile.name()); // store temporary the name
+        char nameBuf[64]; // make sure this is large enough
+        if (m_audiofile) {
+            m_audiofile.getName(nameBuf, sizeof(nameBuf));
+            afn.assign(nameBuf); // store temporary the name
+        }
         m_audioCurrentTime = 0;
         m_audioFileDuration = 0;
         m_resumeFilePos = -1;
@@ -6942,9 +6948,9 @@ void Audio::IIR_filter(int32_t* sample) {
     float    s[2];
     s[LEFTCHANNEL] = (float)(s32[LEFTCHANNEL] * m_audio_items.pre_gain);
     s[RIGHTCHANNEL] = (float)(s32[RIGHTCHANNEL] * m_audio_items.pre_gain);
-    dsps_biquad_sf32(s, s, 1, m_audio_items.coeffs[0], m_audio_items.state_biquad[0]);
-    dsps_biquad_sf32(s, s, 1, m_audio_items.coeffs[1], m_audio_items.state_biquad[1]);
-    dsps_biquad_sf32(s, s, 1, m_audio_items.coeffs[2], m_audio_items.state_biquad[2]);
+    dsps_biquad_f32(s, s, 1, m_audio_items.coeffs[0], m_audio_items.state_biquad[0]);
+    dsps_biquad_f32(s, s, 1, m_audio_items.coeffs[1], m_audio_items.state_biquad[1]);
+    dsps_biquad_f32(s, s, 1, m_audio_items.coeffs[2], m_audio_items.state_biquad[2]);
     s32[LEFTCHANNEL] = (int32_t)std::clamp(s[LEFTCHANNEL], -2147483648.0f, 2147483647.0f);
     s32[RIGHTCHANNEL] = (int32_t)std::clamp(s[RIGHTCHANNEL], -2147483648.0f, 2147483647.0f);
     return;
